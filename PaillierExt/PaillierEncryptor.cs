@@ -1,4 +1,5 @@
 ﻿using System;
+using Org.BouncyCastle.Math;
 
 namespace PaillierExt
 {
@@ -15,44 +16,22 @@ namespace PaillierExt
         // TODO: check again for encryption
         protected override byte[] ProcessDataBlock(byte[] p_block)
         {
-            //// set random K
-            //BigInteger K;
-            //do
-            //{
-            //    K = new BigInteger();
-            //    K.genRandomBits(o_key_struct.P.bitCount() - 1, o_random);
-            //} while (K.gcd(o_key_struct.P - 1) != 1);
-
-            //// compute the values A and B
-            //BigInteger A = o_key_struct.G.modPow(K, o_key_struct.P);
-            //BigInteger B = (o_key_struct.Y.modPow(K, o_key_struct.P) * new BigInteger(p_block)) % (o_key_struct.P);
-
-            //// create an array to contain the ciphertext
-            //byte[] x_result = new byte[o_ciphertext_blocksize];
-            //// copy the bytes from A and B into the result array
-            //byte[] x_a_bytes = A.getBytes();
-            //Array.Copy(x_a_bytes, 0, x_result, o_ciphertext_blocksize / 2
-            //    - x_a_bytes.Length, x_a_bytes.Length);
-            //byte[] x_b_bytes = B.getBytes();
-            //Array.Copy(x_b_bytes, 0, x_result, o_ciphertext_blocksize
-            //    - x_b_bytes.Length, x_b_bytes.Length);
-            //// return the result array
-            //return x_result;
-
             // *********** SPECIAL ************ //
 
             // generate random R
-            BigInteger R = new BigInteger();
-            R.genRandomBits(o_key_struct.N.bitCount() - 1, o_random); //R's bitlength is n-1 so that r is within Zn
+            //BigInteger R = new BigInteger();
+            //R.genRandomBits(o_key_struct.N.BitLength() - 1, o_random); //R's BitLength is n-1 so that r is within Zn
+            BigInteger R = new BigInteger(o_key_struct.N.BitLength - 1, o_random);
 
             // ciphertext c = g^m * r^n mod n^2
-            BigInteger Nsquare = o_key_struct.N * o_key_struct.N;
-            BigInteger C = (o_key_struct.G.modPow(new BigInteger(p_block), Nsquare)
-                           * R.modPow(o_key_struct.N, Nsquare)) % Nsquare;
+            BigInteger Nsquare = o_key_struct.N.Multiply(o_key_struct.N);
+            BigInteger C = (o_key_struct.G.ModPow(new BigInteger(1, p_block), Nsquare).Multiply(
+                           R.ModPow(o_key_struct.N, Nsquare))).Mod(Nsquare);
 
             // create an array to contain the ciphertext
             byte[] x_result = new byte[o_ciphertext_blocksize];
-            byte[] c_bytes = C.getBytes();
+            //byte[] c_bytes = C.getBytes();
+            byte[] c_bytes = C.ToByteArrayUnsigned();
 
             // copy c_bytes into x_result
             Array.Copy(c_bytes, 0, x_result, o_ciphertext_blocksize - c_bytes.Length, c_bytes.Length);

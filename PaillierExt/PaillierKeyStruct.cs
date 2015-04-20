@@ -1,3 +1,5 @@
+using Org.BouncyCastle.Math;
+
 namespace PaillierExt
 {
     public struct PaillierKeyStruct
@@ -11,13 +13,14 @@ namespace PaillierExt
         // ******************** SPECIAL ************* //
         public int getPlaintextBlocksize()
         {
-            return (N.bitCount() - 1) / 8;
+            return (N.BitLength - 1) / 8;
         }
 
         // TODO: check again ciphertext and plaintext block size
         public int getCiphertextBlocksize()
         {
-            return ((N.bitCount() + 7) / 8) * 2;
+            //return ((N.BitLength + 7) / 8) * 2;
+            return ((N.BitLength + 7) / 8) * 2;     // +1 to acommodate signed bit for 2's complement
         }
     }
 }

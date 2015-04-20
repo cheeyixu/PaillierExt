@@ -36,8 +36,8 @@
     <StartupObject>Test</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BigInteger">
-      <HintPath>..\packages\BigInteger.1.0.4\lib\BigInteger.dll</HintPath>
+    <Reference Include="BouncyCastle.Crypto">
+      <HintPath>..\packages\BouncyCastle.1.7.0\lib\Net40-Client\BouncyCastle.Crypto.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
