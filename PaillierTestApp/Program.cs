@@ -1,5 +1,6 @@
 ﻿using PaillierExt;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,8 @@ public class Test
     public static void Main()
     {
         //TestTextEncryption();
-        TestAddition_Batch();
+        //TestAddition_Batch();
+        PerformanceTest();
     }
 
     public static String PrettifyXML(String XML)
@@ -300,6 +302,87 @@ public class Test
         // printing out
         Console.WriteLine("Plaintext: {0} + {1} = {2}", A.ToString(), B.ToString(), (A + B).ToString());
         Console.WriteLine("Encrypted: {0} + {1} = {2}", A_dec.ToString(), B_dec.ToString(), C_dec.ToString());
+    }
+
+    public static void PerformanceTest()
+    {
+        Console.WriteLine();
+        Console.WriteLine("-- Performance Test --");
+
+        long total_time_plaintext = 0;
+        long total_time_encrypted = 0;
+
+        for (int i = 0; i < 10; i++)
+        {
+            Console.WriteLine("-- Performance test iteration {0} --", i);
+
+            total_time_plaintext += ProfilePlaintextMUL(250000);
+            total_time_encrypted += ProfileEncryptedMUL(250000);
+        }
+
+        Console.WriteLine("Total time for plaintext addition  = {0} ticks", total_time_plaintext);
+        Console.WriteLine("Total time for ciphertext addition = {0} ticks", total_time_encrypted);
+        Console.WriteLine();
+    }
+
+    private static long ProfilePlaintextMUL(int iterations)
+    {
+        // clean up
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        var rnd = new Random();
+
+        // prepare and warm up 
+        var a = rnd.Next(32768);
+        var b = rnd.Next(32768);
+        var c = a * b;
+
+        var watch = Stopwatch.StartNew();
+        for (int i = 0; i < iterations; i++)
+        {
+            c = a * b;
+        }
+        watch.Stop();
+
+        return watch.Elapsed.Ticks;
+    }
+
+    private static long ProfileEncryptedMUL(int iterations)
+    {
+        // clean up
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        var rnd = new Random();
+
+        // prepare and warm up 
+        Paillier algorithm = new PaillierManaged();
+        algorithm.KeySize = 384;
+        algorithm.Padding = PaillierPaddingMode.LeadingZeros;
+        string parametersXML = algorithm.ToXmlString(true);
+
+        Paillier encryptAlgorithm = new PaillierManaged();
+        encryptAlgorithm.FromXmlString(algorithm.ToXmlString(false));
+
+        var a = new BigInteger(rnd.Next(32768));
+        var a_bytes = encryptAlgorithm.EncryptData(a.getBytes());
+
+        var b = new BigInteger(rnd.Next(32768));
+        var b_bytes = encryptAlgorithm.EncryptData(b.getBytes());
+
+        var c_bytes = encryptAlgorithm.Addition(a_bytes, b_bytes);
+
+        var watch = Stopwatch.StartNew();
+        for (int i = 0; i < iterations; i++)
+        {
+            c_bytes = encryptAlgorithm.Addition(a_bytes, b_bytes);
+        }
+        watch.Stop();
+
+        return watch.Elapsed.Ticks;
     }
 }
 
